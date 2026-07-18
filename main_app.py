@@ -33,6 +33,18 @@ PAISES = [
 
 NIVELES_RIESGO = ["Bajo", "Medio", "Alto"]
 
+# Nombres de escala CONTINUA válidos para px.imshow / px.colors (en minúscula).
+# "Plotly" es una paleta cualitativa (para barras/dispersión), no una escala
+# continua, por lo que se mapea a "plotly3", su equivalente continuo.
+PALETAS_CONTINUAS = {
+    "Plotly": "plotly3",
+    "Viridis": "viridis",
+    "Bluered": "bluered",
+    "Sunset": "sunset",
+    "Tealrose": "tealrose",
+    "Rainbow": "rainbow",
+}
+
 COLUMNAS_NUMERICAS = [
     "Casos_Confirmados", "Casos_Recuperados", "Fallecidos", "Tasa_Positividad",
 ]
@@ -103,10 +115,10 @@ n_registros = st.sidebar.slider("Número de registros", min_value=5, max_value=5
 semilla_input = st.sidebar.number_input("Semilla aleatoria", min_value=0, max_value=9999, value=st.session_state.semilla, step=1)
 
 col_regen1, col_regen2 = st.sidebar.columns(2)
-if col_regen1.button("🔄 Regenerar datos", use_container_width=True):
+if col_regen1.button("🔄 Regenerar datos", width="stretch"):
     st.session_state.semilla = semilla_input
     st.session_state.df = generar_datos_sinteticos(n_registros, st.session_state.semilla)
-if col_regen2.button("🎲 Semilla aleatoria", use_container_width=True):
+if col_regen2.button("🎲 Semilla aleatoria", width="stretch"):
     nueva_semilla = int(np.random.default_rng().integers(0, 9999))
     st.session_state.semilla = nueva_semilla
     st.session_state.df = generar_datos_sinteticos(n_registros, nueva_semilla)
@@ -167,14 +179,14 @@ tab_datos, tab_cuanti, tab_cuali, tab_graficos = st.tabs([
 # ---------------------------------------------------------------------------
 with tab_datos:
     st.subheader("Vista del dataset sintético")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width="stretch")
 
     st.caption("**Tipos de dato por columna:**")
     tipos_df = pd.DataFrame({
         "Columna": df.columns,
         "Tipo de dato": [str(t) for t in df.dtypes],
     })
-    st.dataframe(tipos_df, use_container_width=True, hide_index=True)
+    st.dataframe(tipos_df, width="stretch", hide_index=True)
 
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button(
@@ -208,19 +220,19 @@ with tab_cuanti:
             "Coef. Variación (%)": round((serie.std() / serie.mean()) * 100, 2) if serie.mean() != 0 else 0,
         })
     resumen_df = pd.DataFrame(resumen)
-    st.dataframe(resumen_df, use_container_width=True, hide_index=True)
+    st.dataframe(resumen_df, width="stretch", hide_index=True)
 
     st.markdown("##### Matriz de correlación (variables numéricas)")
     corr = df[COLUMNAS_NUMERICAS].corr(numeric_only=True)
     fig_corr = px.imshow(
         corr,
         text_auto=".2f",
-        color_continuous_scale=paleta_color,
+        color_continuous_scale=PALETAS_CONTINUAS[paleta_color],
         template=tema_plotly,
         aspect="auto",
     )
     fig_corr.update_layout(height=450)
-    st.plotly_chart(fig_corr, use_container_width=True)
+    st.plotly_chart(fig_corr, width="stretch")
 
 
 # ---------------------------------------------------------------------------
@@ -238,7 +250,7 @@ with tab_cuali:
 
         c1, c2 = st.columns([1, 1.3])
         with c1:
-            st.dataframe(conteo, use_container_width=True, hide_index=True)
+            st.dataframe(conteo, width="stretch", hide_index=True)
             st.caption(f"Moda: **{moda}**")
         with c2:
             fig_bar = px.bar(
@@ -247,7 +259,7 @@ with tab_cuali:
                 text="Frecuencia",
             )
             fig_bar.update_layout(showlegend=False, height=280, margin=dict(t=20, b=20))
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, width="stretch")
         st.markdown("---")
 
 
@@ -357,7 +369,7 @@ with tab_graficos:
                         annotation_text=etiqueta_umbral, annotation_position="top right",
                     )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
     st.markdown("---")
     st.markdown("##### Vista rápida multivariable")
@@ -375,6 +387,6 @@ with tab_graficos:
             template=tema_plotly, markers=True, color_discrete_sequence=px.colors.qualitative.Set2,
         )
         fig_multi.update_layout(height=400)
-        st.plotly_chart(fig_multi, use_container_width=True)
+        st.plotly_chart(fig_multi, width="stretch")
     else:
         st.info("Selecciona al menos una variable para ver la comparación.")
